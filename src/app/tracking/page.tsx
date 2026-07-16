@@ -1,15 +1,14 @@
 import { AppShell } from "@/components/shell/AppShell";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Truck } from "lucide-react";
+import { TrackingBoard } from "@/components/tracking/TrackingBoard";
+import { listShipments } from "@/lib/tracking";
 
-export default function TrackingPage() {
+export const dynamic = "force-dynamic";
+
+export default async function TrackingPage() {
+  const shipments = await listShipments();
   return (
-    <AppShell title="Tracking" reviewCount={3}>
-      <EmptyState
-        icon={Truck}
-        title="All your shipments, one place"
-        description="Live all-carrier tracking with in-app status (shipped, out for delivery, delivered) and click-through to the carrier arrives in the Tracking feature build."
-      />
+    <AppShell title="Tracking">
+      <TrackingBoard shipments={shipments} />
     </AppShell>
   );
 }

@@ -4,9 +4,13 @@ import { ArrowLeft } from "lucide-react";
 import { AppShell } from "@/components/shell/AppShell";
 import { Card } from "@/components/ui/Card";
 import { StatusPill } from "@/components/ui/StatusPill";
+import { ExternalLink } from "lucide-react";
 import { OrderTimeline } from "@/components/orders/OrderTimeline";
 import { OrderDetailActions } from "@/components/orders/OrderDetailActions";
+import { AddTrackingForm } from "@/components/tracking/AddTrackingForm";
+import { ShipmentStatusBadge } from "@/components/tracking/ShipmentStatusBadge";
 import { getOrder } from "@/lib/orders";
+import { listShipmentsForOrder } from "@/lib/tracking";
 import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +23,7 @@ export default async function OrderDetailPage({
   const { id } = await params;
   const order = await getOrder(id);
   if (!order) notFound();
+  const shipments = await listShipmentsForOrder(id);
 
   return (
     <AppShell title="Order">
@@ -137,6 +142,40 @@ export default async function OrderDetailPage({
           </div>
         </Card>
       </div>
+
+      {/* Shipments */}
+      <Card className="mt-4 p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-fg">Tracking</h3>
+        </div>
+        {shipments.length > 0 && (
+          <div className="mb-4 space-y-2">
+            {shipments.map((s) => (
+              <div
+                key={s.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-[--radius-sm] border border-[--color-border-soft] bg-[--color-surface-2] px-3 py-2.5"
+              >
+                <div className="flex items-center gap-3">
+                  <ShipmentStatusBadge status={s.status} />
+                  <div>
+                    <p className="text-[11px] text-fg-faint">{s.carrierName}</p>
+                    <p className="font-mono text-[12.5px] text-fg-muted">{s.trackingNumber}</p>
+                  </div>
+                </div>
+                <a
+                  href={s.trackingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 rounded-[--radius-xs] px-2 py-1.5 text-[12.5px] font-medium text-[--color-brand-soft] hover:bg-[--color-hover]"
+                >
+                  Track <ExternalLink size={13} />
+                </a>
+              </div>
+            ))}
+          </div>
+        )}
+        <AddTrackingForm orderId={order.id} />
+      </Card>
     </AppShell>
   );
 }
