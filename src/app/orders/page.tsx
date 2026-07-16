@@ -1,16 +1,14 @@
 import { AppShell } from "@/components/shell/AppShell";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Package } from "lucide-react";
+import { OrdersTable } from "@/components/orders/OrdersTable";
+import { listOrders } from "@/lib/orders";
 
-export default function OrdersPage() {
+export const dynamic = "force-dynamic";
+
+export default async function OrdersPage() {
+  const orders = await listOrders();
   return (
-    <AppShell title="Orders" reviewCount={3}>
-      <EmptyState
-        icon={Package}
-        title="Orders live here"
-        description="The full orders table — dense, sortable, resizable, with bulk actions and CSV export — arrives in the Orders feature build. Foundation is ready."
-        action="Add your first order"
-      />
+    <AppShell title="Orders">
+      <OrdersTable orders={orders} />
     </AppShell>
   );
 }

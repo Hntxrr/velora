@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Search, Command, Plus, Bell } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
@@ -21,10 +22,12 @@ export function Topbar({ title }: { title: string }) {
           <Bell size={17} />
         </Button>
 
-        <Button size="sm" className="gap-1.5">
-          <Plus size={16} />
-          <span className="hidden sm:inline">New order</span>
-        </Button>
+        <Link href="/orders/new">
+          <Button size="sm" className="gap-1.5">
+            <Plus size={16} />
+            <span className="hidden sm:inline">New order</span>
+          </Button>
+        </Link>
       </div>
     </header>
   );
