@@ -1,0 +1,178 @@
+@import "tailwindcss";
+
+/*
+  VELORA DESIGN SYSTEM — token-driven theming.
+  Every surface, text, border, chart and accent reads from a semantic token.
+  Change --brand-h / --brand-s or the brand ramp below and the entire app re-themes.
+*/
+
+@theme {
+  /* ---- Fonts (wired to next/font variables in layout.tsx) ---- */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), var(--font-inter), sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+
+  /* ---- Radius scale ---- */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-2xl: 28px;
+
+  /* ---- Brand ramp (from the Velora logo gradient: cyan -> blue -> indigo -> violet -> magenta) ---- */
+  --color-cyan: #22d3ee;
+  --color-sky: #38bdf8;
+  --color-blue: #3b82f6;
+  --color-indigo: #6366f1;
+  --color-violet: #7c5cff;
+  --color-purple: #9333ea;
+  --color-magenta: #c026d3;
+  --color-pink: #e948d6;
+
+  /* ---- Semantic brand tokens (single source of truth) ---- */
+  --color-brand: #7c5cff;
+  --color-brand-strong: #6a45ff;
+  --color-brand-soft: #8f74ff;
+  --color-brand-accent: #c026d3;
+  --color-brand-contrast: #ffffff;
+
+  /* ---- Neutral surfaces (dark-first) ---- */
+  --color-bg: #08080c;
+  --color-bg-2: #0b0b12;
+  --color-surface: #101019;
+  --color-surface-2: #14141f;
+  --color-elevated: #1a1a27;
+  --color-hover: #20202e;
+  --color-border: #24242f;
+  --color-border-soft: #1c1c26;
+  --color-ring: #7c5cff;
+
+  /* ---- Text ---- */
+  --color-fg: #f4f4f8;
+  --color-fg-muted: #a6a6bd;
+  --color-fg-faint: #6c6c82;
+  --color-fg-inverse: #0a0a0f;
+
+  /* ---- Status ---- */
+  --color-success: #22c55e;
+  --color-success-soft: #14351f;
+  --color-warning: #f5a524;
+  --color-warning-soft: #3a2a0f;
+  --color-danger: #f04444;
+  --color-danger-soft: #3a1616;
+  --color-info: #38bdf8;
+  --color-info-soft: #0f2a3a;
+
+  /* ---- Shadows ---- */
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 4px 24px -8px rgba(0, 0, 0, 0.55);
+  --shadow-pop: 0 12px 40px -12px rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 0 0 1px rgba(124, 92, 255, 0.25), 0 8px 32px -8px rgba(124, 92, 255, 0.4);
+}
+
+/* Brand gradient used across the app (logo, headings, charts, accents) */
+:root {
+  --gradient-brand: linear-gradient(
+    100deg,
+    var(--color-cyan) 0%,
+    var(--color-blue) 32%,
+    var(--color-violet) 64%,
+    var(--color-magenta) 100%
+  );
+  --gradient-brand-soft: linear-gradient(
+    135deg,
+    rgba(34, 211, 238, 0.16) 0%,
+    rgba(124, 92, 255, 0.16) 55%,
+    rgba(192, 38, 211, 0.16) 100%
+  );
+  --gradient-surface: linear-gradient(180deg, var(--color-surface) 0%, var(--color-bg-2) 100%);
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Ambient brand glow behind the app background */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(60% 55% at 12% 0%, rgba(56, 130, 246, 0.1), transparent 60%),
+    radial-gradient(55% 55% at 92% 8%, rgba(192, 38, 211, 0.09), transparent 60%);
+}
+
+/* Numbers align in tables (money columns) */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Gradient text helper */
+.text-gradient {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-hover);
+  background-clip: padding-box;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Motion */
+@keyframes velora-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes velora-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-fade-up {
+  animation: velora-fade-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--color-surface-2) 25%, var(--color-hover) 37%, var(--color-surface-2) 63%);
+  background-size: 200% 100%;
+  animation: velora-shimmer 1.4s ease-in-out infinite;
+}
