@@ -2,12 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
+import { LogOut } from "lucide-react";
 import { NAV } from "@/lib/nav";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { cn } from "@/lib/utils";
 
 export function Sidebar({ reviewCount = 0 }: { reviewCount?: number }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const user = session?.user;
+  const isPro = user?.plan === "PRO";
+  const initial = (user?.name ?? user?.email ?? "V").charAt(0).toUpperCase();
 
   return (
     <aside className="hidden md:flex h-dvh w-[248px] shrink-0 flex-col border-r border-[--color-border] bg-[--color-bg-2]/80 backdrop-blur-xl">
@@ -79,17 +85,37 @@ export function Sidebar({ reviewCount = 0 }: { reviewCount?: number }) {
       </nav>
 
       <div className="border-t border-[--color-border] p-3">
-        <div className="flex items-center gap-3 rounded-[--radius-sm] p-2 hover:bg-[--color-hover]">
-          <div
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-semibold text-white"
-            style={{ background: "var(--gradient-brand)" }}
-          >
-            V
-          </div>
+        <div className="flex items-center gap-3 rounded-[--radius-sm] p-2">
+          {user?.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={user.image}
+              alt=""
+              className="h-8 w-8 rounded-full object-cover"
+            />
+          ) : (
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-semibold text-white"
+              style={{ background: "var(--gradient-brand)" }}
+            >
+              {initial}
+            </div>
+          )}
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-medium text-fg">You</p>
-            <p className="truncate text-[11.5px] text-fg-faint">Free plan</p>
+            <p className="truncate text-[13px] font-medium text-fg">
+              {user?.name ?? user?.email ?? "Account"}
+            </p>
+            <p className="truncate text-[11.5px] text-fg-faint">
+              {isPro ? "Pro plan" : "Free plan"}
+            </p>
           </div>
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            aria-label="Sign out"
+            className="rounded-[--radius-xs] p-1.5 text-fg-faint transition-colors hover:bg-[--color-hover] hover:text-fg"
+          >
+            <LogOut size={15} />
+          </button>
         </div>
       </div>
     </aside>
