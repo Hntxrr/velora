@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { allocateCosts } from "@/lib/costing";
 import { matchProductId } from "@/lib/product-match";
+import { materializeInventoryForOrder } from "@/lib/inventory-materialize";
 import type { OrderStatus } from "@prisma/client";
 
 async function requireUserId(): Promise<string> {
@@ -140,6 +141,10 @@ export async function updateOrder(id: string, input: OrderInput) {
 export async function updateOrderStatus(id: string, status: OrderStatus) {
   const userId = await requireUserId();
   await db.order.updateMany({ where: { id, userId }, data: { status } });
+  if (status === "DELIVERED") {
+    await materializeInventoryForOrder(userId, id);
+    revalidatePath("/inventory");
+  }
   revalidatePath("/orders");
   revalidatePath(`/orders/${id}`);
 }

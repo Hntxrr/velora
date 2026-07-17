@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import type { ShipmentStatus } from "@prisma/client";
 import { detectCarrier, trackingUrl } from "@/lib/carriers";
+import { materializeInventoryForOrder } from "@/lib/inventory-materialize";
 
 async function requireUserId(): Promise<string> {
   const session = await auth();
@@ -79,6 +80,11 @@ export async function updateShipmentStatus(id: string, status: ShipmentStatus) {
     };
     if (status === "DELIVERED") data.deliveryDateActual = new Date();
     await db.order.update({ where: { id: shipment.orderId }, data });
+  }
+
+  if (status === "DELIVERED") {
+    await materializeInventoryForOrder(userId, shipment.orderId);
+    revalidatePath("/inventory");
   }
 
   revalidatePath("/tracking");
