@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { allocateCosts } from "@/lib/costing";
 import { detectCarrier, trackingUrl } from "@/lib/carriers";
+import { matchProductId } from "@/lib/product-match";
 import type { ParsedOrder } from "@/lib/email/types";
 
 async function requireUserId(): Promise<string> {
@@ -40,6 +41,7 @@ export async function approveDraft(draftId: string) {
 
   const orderNumber = parsed.orderNumber ?? `EMAIL-${draft.rawEmail.receivedAt.getTime()}`;
   const hasTracking = parsed.trackingNumbers.length > 0;
+  const productIds = await Promise.all(items.map((it) => matchProductId(userId, it.name)));
 
   const order = await db.order.create({
     data: {
@@ -58,6 +60,7 @@ export async function approveDraft(draftId: string) {
       items: {
         create: items.map((it, idx) => ({
           userId,
+          productId: productIds[idx],
           rawName: it.name,
           quantity: it.quantity || 1,
           unitPrice: it.unitPrice,

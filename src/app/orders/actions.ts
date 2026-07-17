@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { allocateCosts } from "@/lib/costing";
+import { matchProductId } from "@/lib/product-match";
 import type { OrderStatus } from "@prisma/client";
 
 async function requireUserId(): Promise<string> {
@@ -56,9 +57,22 @@ function buildItemData(input: OrderInput) {
   return { items, subtotal: alloc.subtotal, grandTotal: alloc.grandTotal };
 }
 
+async function resolveProductIds(
+  userId: string,
+  items: ReturnType<typeof buildItemData>["items"]
+) {
+  return Promise.all(
+    items.map(async (i) => ({
+      ...i,
+      productId: i.productId ?? (await matchProductId(userId, i.rawName)),
+    }))
+  );
+}
+
 export async function createOrder(input: OrderInput) {
   const userId = await requireUserId();
-  const { items, subtotal, grandTotal } = buildItemData(input);
+  const { items: rawItems, subtotal, grandTotal } = buildItemData(input);
+  const items = await resolveProductIds(userId, rawItems);
 
   const order = await db.order.create({
     data: {
@@ -91,7 +105,8 @@ export async function updateOrder(id: string, input: OrderInput) {
   const existing = await db.order.findFirst({ where: { id, userId } });
   if (!existing) throw new Error("Order not found");
 
-  const { items, subtotal, grandTotal } = buildItemData(input);
+  const { items: rawItems, subtotal, grandTotal } = buildItemData(input);
+  const items = await resolveProductIds(userId, rawItems);
 
   await db.$transaction([
     db.orderItem.deleteMany({ where: { orderId: id } }),
