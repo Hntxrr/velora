@@ -6,6 +6,8 @@ import { auth } from "@/auth";
 import type { ShipmentStatus } from "@prisma/client";
 import { detectCarrier, trackingUrl } from "@/lib/carriers";
 import { materializeInventoryForOrder } from "@/lib/inventory-materialize";
+import { notify } from "@/lib/notify";
+import type { NotificationType } from "@prisma/client";
 
 async function requireUserId(): Promise<string> {
   const session = await auth();
@@ -85,6 +87,22 @@ export async function updateShipmentStatus(id: string, status: ShipmentStatus) {
   if (status === "DELIVERED") {
     await materializeInventoryForOrder(userId, shipment.orderId);
     revalidatePath("/inventory");
+  }
+
+  // Notify on meaningful shipment transitions.
+  const notifyMap: Partial<Record<ShipmentStatus, { type: NotificationType; label: string }>> = {
+    IN_TRANSIT: { type: "ORDER_SHIPPED", label: "shipped" },
+    OUT_FOR_DELIVERY: { type: "ORDER_OUT_FOR_DELIVERY", label: "out for delivery" },
+    DELIVERED: { type: "ORDER_DELIVERED", label: "delivered" },
+  };
+  const n = notifyMap[status];
+  if (n) {
+    const order = await db.order.findUnique({
+      where: { id: shipment.orderId },
+      include: { retailer: true },
+    });
+    const who = order?.retailer?.name ?? order?.storeLabel ?? "Your order";
+    await notify(userId, n.type, `${who} ${n.label}`, `Order #${order?.orderNumber ?? ""}`);
   }
 
   revalidatePath("/tracking");

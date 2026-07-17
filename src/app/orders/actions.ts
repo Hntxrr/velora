@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { allocateCosts } from "@/lib/costing";
 import { matchProductId } from "@/lib/product-match";
 import { materializeInventoryForOrder } from "@/lib/inventory-materialize";
+import { notify } from "@/lib/notify";
 import type { OrderStatus } from "@prisma/client";
 
 async function requireUserId(): Promise<string> {
@@ -144,6 +145,11 @@ export async function updateOrderStatus(id: string, status: OrderStatus) {
   if (status === "DELIVERED") {
     await materializeInventoryForOrder(userId, id);
     revalidatePath("/inventory");
+  }
+  if (status === "CANCELLED") {
+    const order = await db.order.findUnique({ where: { id }, include: { retailer: true } });
+    const who = order?.retailer?.name ?? order?.storeLabel ?? "An order";
+    await notify(userId, "ORDER_CANCELLED", `${who} cancelled`, `Order #${order?.orderNumber ?? ""}`);
   }
   revalidatePath("/orders");
   revalidatePath(`/orders/${id}`);

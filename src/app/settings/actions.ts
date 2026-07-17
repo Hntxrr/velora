@@ -47,3 +47,43 @@ export async function syncNow() {
   const error = results.find((r) => r.error)?.error ?? null;
   return { newDrafts, error };
 }
+
+
+// ─── Discord webhooks ───────────────────────────────────────────
+
+import { sendDiscord } from "@/lib/webhooks";
+
+export async function addWebhook(input: { url: string; events: string[] }) {
+  const userId = await requireUserId();
+  const url = input.url.trim();
+  if (!/^https:\/\/(discord\.com|discordapp\.com)\/api\/webhooks\//.test(url)) {
+    throw new Error("Enter a valid Discord webhook URL");
+  }
+  await db.webhookConfig.create({
+    data: { userId, kind: "DISCORD", url, events: input.events, enabled: true },
+  });
+  revalidatePath("/settings");
+}
+
+export async function toggleWebhook(id: string, enabled: boolean) {
+  const userId = await requireUserId();
+  await db.webhookConfig.updateMany({ where: { id, userId }, data: { enabled } });
+  revalidatePath("/settings");
+}
+
+export async function deleteWebhook(id: string) {
+  const userId = await requireUserId();
+  await db.webhookConfig.deleteMany({ where: { id, userId } });
+  revalidatePath("/settings");
+}
+
+export async function testWebhook(id: string) {
+  const userId = await requireUserId();
+  const hook = await db.webhookConfig.findFirst({ where: { id, userId } });
+  if (!hook) throw new Error("Webhook not found");
+  const ok = await sendDiscord(hook.url, {
+    title: "Velora test notification",
+    description: "Your Discord webhook is connected and working.",
+  });
+  return { ok };
+}

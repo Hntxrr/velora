@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { decryptSecret } from "@/lib/crypto";
 import { fetchMessages } from "./imap";
 import { parseEmail } from "./parsers";
+import { notify } from "@/lib/notify";
 
 const FIRST_SYNC_WINDOW_DAYS = 90;
 
@@ -84,6 +85,12 @@ export async function syncConnection(connectionId: string): Promise<SyncResult> 
           },
         });
         newDrafts++;
+        await notify(
+          connection.userId,
+          "ORDER_PARSED",
+          `New order to review${retailer ? ` — ${retailer.name}` : ""}`,
+          parsed.orderNumber ? `Order #${parsed.orderNumber}` : msg.subject
+        );
       }
     }
 
