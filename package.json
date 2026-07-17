@@ -20,6 +20,8 @@
     "@auth/prisma-adapter": "^2.11.2",
     "@prisma/client": "^6.3.1",
     "clsx": "^2.1.1",
+    "gifenc": "^1.0.3",
+    "html-to-image": "^1.11.13",
     "imapflow": "^1.4.7",
     "lucide-react": "^0.474.0",
     "mailparser": "^3.9.14",
