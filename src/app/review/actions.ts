@@ -50,6 +50,8 @@ export async function approveDraft(draftId: string) {
       orderNumber,
       status: hasTracking ? "SHIPPED" : "CONFIRMED",
       purchaseDate: parsed.purchaseDate ? new Date(parsed.purchaseDate) : draft.rawEmail.receivedAt,
+      shippingAddress: parsed.shippingAddress ?? null,
+      accountEmail: parsed.accountEmail ?? null,
       subtotal: alloc.subtotal,
       taxTotal: parsed.taxTotal,
       shippingTotal: parsed.shippingTotal,

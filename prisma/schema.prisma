@@ -262,6 +262,8 @@ model Order {
   purchaseDate      DateTime
   deliveryDateEst   DateTime?
   deliveryDateActual DateTime?
+  shippingAddress   String?       @db.Text
+  accountEmail      String? // the buyer email / account this order belongs to
   subtotal          Decimal       @default(0) @db.Decimal(12, 2)
   taxTotal          Decimal       @default(0) @db.Decimal(12, 2)
   shippingTotal     Decimal       @default(0) @db.Decimal(12, 2)

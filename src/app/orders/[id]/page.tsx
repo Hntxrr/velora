@@ -140,6 +140,23 @@ export default async function OrderDetailPage({
               <p>Est. delivery: {order.deliveryDateEst.slice(0, 10)}</p>
             )}
           </div>
+
+          {(order.accountEmail || order.shippingAddress) && (
+            <div className="mt-4 space-y-3 border-t border-[--color-border] pt-4">
+              {order.accountEmail && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-fg-faint">Account</p>
+                  <p className="mt-0.5 text-[13px] text-fg">{order.accountEmail}</p>
+                </div>
+              )}
+              {order.shippingAddress && (
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-fg-faint">Ship to</p>
+                  <p className="mt-0.5 whitespace-pre-wrap text-[13px] text-fg-muted">{order.shippingAddress}</p>
+                </div>
+              )}
+            </div>
+          )}
         </Card>
       </div>
 

@@ -27,6 +27,8 @@ export type OrderDTO = {
   purchaseDate: string;
   deliveryDateEst: string | null;
   deliveryDateActual: string | null;
+  shippingAddress: string | null;
+  accountEmail: string | null;
   subtotal: number;
   taxTotal: number;
   shippingTotal: number;
@@ -71,6 +73,8 @@ function toDTO(o: OrderWithRelations): OrderDTO {
     purchaseDate: o.purchaseDate.toISOString(),
     deliveryDateEst: o.deliveryDateEst?.toISOString() ?? null,
     deliveryDateActual: o.deliveryDateActual?.toISOString() ?? null,
+    shippingAddress: o.shippingAddress,
+    accountEmail: o.accountEmail,
     subtotal: dec(o.subtotal),
     taxTotal: dec(o.taxTotal),
     shippingTotal: dec(o.shippingTotal),

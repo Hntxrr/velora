@@ -31,6 +31,8 @@ export type OrderInput = {
   priority?: "LOW" | "NORMAL" | "HIGH";
   purchaseDate: string; // ISO date
   deliveryDateEst?: string | null;
+  shippingAddress?: string | null;
+  accountEmail?: string | null;
   taxTotal: number;
   shippingTotal: number;
   discountTotal: number;
@@ -86,6 +88,8 @@ export async function createOrder(input: OrderInput) {
       priority: input.priority ?? "NORMAL",
       purchaseDate: new Date(input.purchaseDate),
       deliveryDateEst: input.deliveryDateEst ? new Date(input.deliveryDateEst) : null,
+      shippingAddress: input.shippingAddress || null,
+      accountEmail: input.accountEmail || null,
       subtotal,
       taxTotal: input.taxTotal,
       shippingTotal: input.shippingTotal,
@@ -122,6 +126,8 @@ export async function updateOrder(id: string, input: OrderInput) {
         priority: input.priority ?? "NORMAL",
         purchaseDate: new Date(input.purchaseDate),
         deliveryDateEst: input.deliveryDateEst ? new Date(input.deliveryDateEst) : null,
+        shippingAddress: input.shippingAddress || null,
+        accountEmail: input.accountEmail || null,
         subtotal,
         taxTotal: input.taxTotal,
         shippingTotal: input.shippingTotal,

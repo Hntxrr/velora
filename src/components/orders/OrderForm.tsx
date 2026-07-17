@@ -43,6 +43,8 @@ export function OrderForm({
   const [discountTotal, setDiscountTotal] = React.useState(String(order?.discountTotal ?? ""));
   const [tags, setTags] = React.useState((order?.tags ?? []).join(", "));
   const [notes, setNotes] = React.useState(order?.notes ?? "");
+  const [accountEmail, setAccountEmail] = React.useState(order?.accountEmail ?? "");
+  const [shippingAddress, setShippingAddress] = React.useState(order?.shippingAddress ?? "");
   const [lines, setLines] = React.useState<LineRow[]>(
     order?.items.map((i) => ({
       rawName: i.rawName,
@@ -84,6 +86,8 @@ export function OrderForm({
       priority: priority as OrderInput["priority"],
       purchaseDate: new Date(purchaseDate).toISOString(),
       deliveryDateEst: deliveryDateEst ? new Date(deliveryDateEst).toISOString() : null,
+      accountEmail: accountEmail.trim() || null,
+      shippingAddress: shippingAddress.trim() || null,
       taxTotal: num(taxTotal),
       shippingTotal: num(shippingTotal),
       discountTotal: num(discountTotal),
@@ -163,6 +167,19 @@ export function OrderForm({
             <div>
               <Label>Tags (comma separated)</Label>
               <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="hype, restock" />
+            </div>
+            <div>
+              <Label>Account / buyer email</Label>
+              <Input value={accountEmail} onChange={(e) => setAccountEmail(e.target.value)} placeholder="which account placed it" />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>Shipping address</Label>
+              <Textarea
+                value={shippingAddress}
+                onChange={(e) => setShippingAddress(e.target.value)}
+                placeholder="Where it's being sent"
+                className="min-h-[64px]"
+              />
             </div>
           </div>
         </Card>

@@ -141,6 +141,19 @@ function findItems(text: string): ParsedItem[] {
   return items.slice(0, 40);
 }
 
+function findShippingAddress(text: string): string | null {
+  const m = text.match(
+    /(?:ship(?:ping)?\s*(?:to|address)|deliver(?:y)?\s*to)\s*:?\s*(.{10,160}?)(?:\n\n|order|subtotal|total|tracking|$)/is
+  );
+  if (m?.[1]) return m[1].replace(/\s{2,}/g, " ").trim();
+  return null;
+}
+
+function findAccountEmail(text: string): string | null {
+  const m = text.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i);
+  return m ? m[0] : null;
+}
+
 function findPurchaseDate(text: string, fallback: Date): string {
   const m = text.match(
     /(?:order\s*date|placed\s*on|ordered\s*on)[:\s]+([A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4})/i
@@ -171,6 +184,8 @@ export function parseEmail(msg: EmailMessage): ParsedOrder {
   const trackingNumbers = findTracking(text);
   const kind = classify(msg.subject);
   const purchaseDate = findPurchaseDate(text, msg.date);
+  const shippingAddress = findShippingAddress(text);
+  const accountEmail = findAccountEmail(text);
 
   // Confidence: reward the signals that make a draft trustworthy.
   let confidence = 0;
@@ -189,6 +204,8 @@ export function parseEmail(msg: EmailMessage): ParsedOrder {
     shippingTotal,
     discountTotal,
     grandTotal,
+    shippingAddress,
+    accountEmail,
     trackingNumbers,
     confidence,
     kind,

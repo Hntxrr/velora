@@ -24,6 +24,8 @@ export type ParsedOrder = {
   shippingTotal: number;
   discountTotal: number;
   grandTotal: number;
+  shippingAddress: string | null;
+  accountEmail: string | null;
   trackingNumbers: string[];
   /** 0..1 heuristic confidence used to sort the review queue. */
   confidence: number;
