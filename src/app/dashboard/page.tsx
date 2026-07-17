@@ -1,157 +1,150 @@
+import Link from "next/link";
+import { Wallet, TrendingUp, PiggyBank, Percent, Target, Truck, ArrowRight } from "lucide-react";
 import { AppShell } from "@/components/shell/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { StatCard } from "@/components/ui/StatCard";
-import { StatusPill, type OrderStatus } from "@/components/ui/StatusPill";
-import { AreaChart } from "@/components/ui/AreaChart";
+import { StatusPill } from "@/components/ui/StatusPill";
+import { SpendProfitChart } from "@/components/charts/SpendProfitChart";
 import { Button } from "@/components/ui/Button";
-import { formatCurrency } from "@/lib/utils";
-import { Wallet, TrendingUp, PiggyBank, Percent, Target, Truck, ArrowRight } from "lucide-react";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Package } from "lucide-react";
+import { getOverview, getSpendProfitTrend } from "@/lib/analytics";
+import { listOrders } from "@/lib/orders";
+import { getDeliveryEvents } from "@/lib/tracking";
+import { countDrafts } from "@/lib/review";
+import { formatCurrency, formatPercent } from "@/lib/utils";
 
-// Placeholder sample data — replaced by live data once the DB + orders land.
-const spendTrend = [
-  { label: "Feb", value: 2200 },
-  { label: "Mar", value: 3100 },
-  { label: "Apr", value: 2750 },
-  { label: "May", value: 4200 },
-  { label: "Jun", value: 3850 },
-  { label: "Jul", value: 5100 },
-];
+export const dynamic = "force-dynamic";
 
-const recentOrders: {
-  retailer: string;
-  order: string;
-  items: string;
-  total: number;
-  status: OrderStatus;
-}[] = [
-  { retailer: "Pokémon Center", order: "PC-88213", items: "2× 151 ETB, 2× Booster Bundle", total: 219.96, status: "shipped" },
-  { retailer: "Best Buy", order: "BBY-4471", items: "1× PS5 Slim", total: 542.31, status: "out_for_delivery" },
-  { retailer: "Target", order: "T-99120", items: "4× Prismatic ETB", total: 199.96, status: "delivered" },
-  { retailer: "Walmart", order: "WM-31882", items: "1× LEGO Icons Set", total: 189.99, status: "confirmed" },
-  { retailer: "Costco", order: "CO-2231", items: "1× GPU RTX Bundle", total: 1299.0, status: "cancelled" },
-];
+export default async function DashboardPage() {
+  const now = new Date();
+  const in7 = new Date(now.getTime() + 7 * 864e5);
 
-const arriving = [
-  { retailer: "Pokémon Center", when: "Today", label: "2 orders" },
-  { retailer: "Best Buy", when: "Tomorrow", label: "1 order" },
-  { retailer: "Walmart", when: "Fri, Jul 18", label: "1 order" },
-];
+  const [overview, trend, orders, arriving, reviewCount] = await Promise.all([
+    getOverview(),
+    getSpendProfitTrend(6),
+    listOrders(),
+    getDeliveryEvents(now, in7),
+    countDrafts(),
+  ]);
 
-export default function DashboardPage() {
+  const recent = orders.slice(0, 6);
+  const empty = orders.length === 0;
+
   return (
-    <AppShell title="Dashboard" reviewCount={3}>
-      {/* Intro */}
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-[13.5px] text-fg-muted">
-            Welcome back — here&apos;s your reselling snapshot.
-          </p>
-        </div>
-        <div className="flex items-center gap-1 rounded-[--radius-sm] border border-[--color-border] bg-[--color-surface] p-1">
-          {["Month", "YTD", "Lifetime"].map((p, i) => (
-            <button
-              key={p}
-              className={
-                "rounded-[--radius-xs] px-3 py-1.5 text-[12.5px] font-medium transition-colors " +
-                (i === 0
-                  ? "bg-[--color-elevated] text-fg"
-                  : "text-fg-muted hover:text-fg")
-              }
-            >
-              {p}
-            </button>
-          ))}
-        </div>
+    <AppShell title="Dashboard" reviewCount={reviewCount}>
+      <div className="mb-5">
+        <p className="text-[13.5px] text-fg-muted">
+          Welcome back — here&apos;s your reselling snapshot.
+        </p>
       </div>
 
-      {/* KPI row */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <StatCard label="Total Spent" value={formatCurrency(21100)} accent icon={<Wallet size={16} />} hint="Cash out this month" />
-        <StatCard label="Revenue" value={formatCurrency(8420)} delta={{ value: "12%", positive: true }} icon={<TrendingUp size={16} />} />
-        <StatCard label="Profit" value={formatCurrency(2310)} delta={{ value: "8%", positive: true }} icon={<PiggyBank size={16} />} hint="Matched to sold items" />
-        <StatCard label="ROI" value="37.7%" delta={{ value: "3%", positive: true }} icon={<Percent size={16} />} />
-        <StatCard label="Stick Rate" value="82%" delta={{ value: "4%", positive: false }} icon={<Target size={16} />} hint="Confirmed vs cancelled" />
-        <StatCard label="Arriving" value="4" icon={<Truck size={16} />} hint="Next 7 days" />
-      </div>
+      {empty ? (
+        <EmptyState
+          icon={Package}
+          title="Let's get your first order in"
+          description="Add an order manually or connect your inbox in Settings to auto-import from forwarded emails. Your dashboard fills in from there."
+          action="Add an order"
+        />
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+            <StatCard label="Spent (mo)" value={formatCurrency(overview.totalSpentMonth)} accent icon={<Wallet size={16} />} hint="This month" />
+            <StatCard label="Revenue" value={formatCurrency(overview.revenue)} icon={<TrendingUp size={16} />} />
+            <StatCard label="Profit" value={formatCurrency(overview.profit)} icon={<PiggyBank size={16} />} hint="Matched to sold" />
+            <StatCard label="ROI" value={overview.revenue ? formatPercent(overview.roi) : "—"} icon={<Percent size={16} />} />
+            <StatCard label="Stick rate" value={formatPercent(overview.stickRate)} icon={<Target size={16} />} hint="Confirmed vs cancelled" />
+            <StatCard label="Arriving" value={String(overview.arrivingCount)} icon={<Truck size={16} />} hint="Next 7 days" />
+          </div>
 
-      {/* Charts + side rail */}
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Spend &amp; Profit</CardTitle>
-            <span className="text-[12px] text-fg-faint">Last 6 months</span>
-          </CardHeader>
-          <CardContent>
-            <AreaChart data={spendTrend} />
-          </CardContent>
-        </Card>
+          <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Spend &amp; Profit</CardTitle>
+                <span className="text-[12px] text-fg-faint">Last 6 months</span>
+              </CardHeader>
+              <CardContent>
+                <SpendProfitChart data={trend} />
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Arriving soon</CardTitle>
-            <Button variant="ghost" size="sm" className="h-7 px-2 text-[12px]">
-              Calendar <ArrowRight size={13} />
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-1.5">
-            {arriving.map((a) => (
-              <div
-                key={a.retailer + a.when}
-                className="flex items-center justify-between rounded-[--radius-sm] border border-[--color-border-soft] bg-[--color-surface-2] px-3 py-2.5"
-              >
-                <div>
-                  <p className="text-[13px] font-medium text-fg">{a.retailer}</p>
-                  <p className="text-[11.5px] text-fg-faint">{a.label}</p>
-                </div>
-                <span className="rounded-full bg-[--color-elevated] px-2.5 py-1 text-[11.5px] font-medium text-fg-muted">
-                  {a.when}
-                </span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Arriving soon</CardTitle>
+                <Link href="/calendar">
+                  <Button variant="ghost" size="sm" className="h-7 px-2 text-[12px]">
+                    Calendar <ArrowRight size={13} />
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent className="space-y-1.5">
+                {arriving.length === 0 ? (
+                  <p className="py-6 text-center text-[13px] text-fg-faint">
+                    Nothing scheduled in the next 7 days.
+                  </p>
+                ) : (
+                  arriving.slice(0, 5).map((a) => (
+                    <Link
+                      key={a.orderId}
+                      href={`/orders/${a.orderId}`}
+                      className="flex items-center justify-between rounded-[--radius-sm] border border-[--color-border-soft] bg-[--color-surface-2] px-3 py-2.5 hover:border-[--color-hover]"
+                    >
+                      <div>
+                        <p className="text-[13px] font-medium text-fg">{a.retailerName ?? "Order"}</p>
+                        <p className="font-mono text-[11px] text-fg-faint">#{a.orderNumber}</p>
+                      </div>
+                      <span className="rounded-full bg-[--color-elevated] px-2.5 py-1 text-[11.5px] font-medium text-fg-muted">
+                        {a.date.slice(5, 10)}
+                      </span>
+                    </Link>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
-      {/* Recent orders */}
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle>Recent orders</CardTitle>
-          <Button variant="ghost" size="sm" className="h-7 px-2 text-[12px]">
-            View all <ArrowRight size={13} />
-          </Button>
-        </CardHeader>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-left text-[13px]">
-            <thead>
-              <tr className="border-y border-[--color-border] text-[11.5px] uppercase tracking-wide text-fg-faint">
-                <th className="px-5 py-2.5 font-semibold">Retailer</th>
-                <th className="px-5 py-2.5 font-semibold">Order</th>
-                <th className="px-5 py-2.5 font-semibold">Items</th>
-                <th className="px-5 py-2.5 text-right font-semibold">Total</th>
-                <th className="px-5 py-2.5 font-semibold">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentOrders.map((o) => (
-                <tr
-                  key={o.order}
-                  className="border-b border-[--color-border-soft] transition-colors last:border-0 hover:bg-[--color-surface-2]"
-                >
-                  <td className="px-5 py-3 font-medium text-fg">{o.retailer}</td>
-                  <td className="px-5 py-3 font-mono text-[12px] text-fg-muted">{o.order}</td>
-                  <td className="px-5 py-3 text-fg-muted">{o.items}</td>
-                  <td className="tabular px-5 py-3 text-right font-medium text-fg">
-                    {formatCurrency(o.total)}
-                  </td>
-                  <td className="px-5 py-3">
-                    <StatusPill status={o.status} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle>Recent orders</CardTitle>
+              <Link href="/orders">
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-[12px]">
+                  View all <ArrowRight size={13} />
+                </Button>
+              </Link>
+            </CardHeader>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] text-left text-[13px]">
+                <thead>
+                  <tr className="border-y border-[--color-border] text-[11.5px] uppercase tracking-wide text-fg-faint">
+                    <th className="px-5 py-2.5 font-semibold">Retailer</th>
+                    <th className="px-5 py-2.5 font-semibold">Order</th>
+                    <th className="px-5 py-2.5 font-semibold">Items</th>
+                    <th className="px-5 py-2.5 text-right font-semibold">Total</th>
+                    <th className="px-5 py-2.5 font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recent.map((o) => (
+                    <tr key={o.id} className="border-b border-[--color-border-soft] transition-colors last:border-0 hover:bg-[--color-surface-2]">
+                      <td className="px-5 py-3 font-medium text-fg">
+                        <Link href={`/orders/${o.id}`}>{o.retailerName ?? o.storeLabel ?? "—"}</Link>
+                      </td>
+                      <td className="px-5 py-3 font-mono text-[12px] text-fg-muted">{o.orderNumber}</td>
+                      <td className="max-w-[280px] truncate px-5 py-3 text-fg-muted">
+                        {o.items.map((i) => `${i.quantity}× ${i.rawName}`).join(", ") || "—"}
+                      </td>
+                      <td className="tabular px-5 py-3 text-right font-medium text-fg">{formatCurrency(o.grandTotal)}</td>
+                      <td className="px-5 py-3">
+                        <StatusPill status={o.status.toLowerCase() as never} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </>
+      )}
     </AppShell>
   );
 }
