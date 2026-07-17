@@ -1,15 +1,14 @@
 import { AppShell } from "@/components/shell/AppShell";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Inbox } from "lucide-react";
+import { ReviewQueue } from "@/components/review/ReviewQueue";
+import { listDrafts } from "@/lib/review";
 
-export default function ReviewPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ReviewPage() {
+  const drafts = await listDrafts();
   return (
-    <AppShell title="Review Queue" reviewCount={3}>
-      <EmptyState
-        icon={Inbox}
-        title="Parsed orders land here"
-        description="Forwarded order emails are parsed into drafts you approve with one click before they become orders — the trust layer that keeps your numbers accurate."
-      />
+    <AppShell title="Review Queue" reviewCount={drafts.length}>
+      <ReviewQueue drafts={drafts} />
     </AppShell>
   );
 }

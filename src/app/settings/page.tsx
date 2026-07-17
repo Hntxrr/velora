@@ -1,15 +1,22 @@
 import { AppShell } from "@/components/shell/AppShell";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Settings } from "lucide-react";
+import { InboxManager } from "@/components/settings/InboxManager";
+import { listInboxes } from "@/lib/inboxes";
+import { countDrafts } from "@/lib/review";
 
-export default function SettingsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function SettingsPage() {
+  const [inboxes, reviewCount] = await Promise.all([listInboxes(), countDrafts()]);
   return (
-    <AppShell title="Settings" reviewCount={3}>
-      <EmptyState
-        icon={Settings}
-        title="Settings"
-        description="Account, connected inboxes (Gmail app password), notification preferences, Discord webhooks, subscription, and data export/delete."
-      />
+    <AppShell title="Settings" reviewCount={reviewCount}>
+      <div className="max-w-3xl">
+        <h2 className="mb-1 font-display text-[17px] font-semibold text-fg">Email &amp; sync</h2>
+        <p className="mb-5 text-[13px] text-fg-muted">
+          Connect the inbox your order emails land in. Velora parses them into orders you
+          approve in the Review Queue.
+        </p>
+        <InboxManager inboxes={inboxes} />
+      </div>
     </AppShell>
   );
 }
