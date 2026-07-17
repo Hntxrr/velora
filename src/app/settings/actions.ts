@@ -87,3 +87,30 @@ export async function testWebhook(id: string) {
   });
   return { ok };
 }
+
+
+// ─── Profile & account ──────────────────────────────────────────
+
+import { redirect } from "next/navigation";
+import { signOut } from "@/auth";
+
+export async function updateProfile(input: { name: string }) {
+  const userId = await requireUserId();
+  await db.user.update({ where: { id: userId }, data: { name: input.name.trim() || null } });
+  revalidatePath("/settings");
+}
+
+/** Demo plan switch. Real billing (Stripe) plugs in here later. */
+export async function setPlan(plan: "FREE" | "PRO") {
+  const userId = await requireUserId();
+  await db.user.update({ where: { id: userId }, data: { plan } });
+  revalidatePath("/", "layout");
+}
+
+export async function deleteAccount() {
+  const userId = await requireUserId();
+  // Cascades remove all user-owned rows (see schema onDelete: Cascade).
+  await db.user.delete({ where: { id: userId } });
+  await signOut({ redirect: false });
+  redirect("/login");
+}

@@ -1,21 +1,39 @@
 import { AppShell } from "@/components/shell/AppShell";
 import { InboxManager } from "@/components/settings/InboxManager";
 import { WebhookManager } from "@/components/settings/WebhookManager";
+import { AccountSettings } from "@/components/settings/AccountSettings";
 import { listInboxes } from "@/lib/inboxes";
 import { listWebhooks } from "@/lib/notifications";
 import { countDrafts } from "@/lib/review";
+import { auth } from "@/auth";
+import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const [inboxes, webhooks, reviewCount] = await Promise.all([
+  const session = await auth();
+  const [inboxes, webhooks, reviewCount, user] = await Promise.all([
     listInboxes(),
     listWebhooks(),
     countDrafts(),
+    db.user.findUnique({
+      where: { id: session!.user.id },
+      select: { name: true, email: true, plan: true },
+    }),
   ]);
   return (
     <AppShell title="Settings" reviewCount={reviewCount}>
       <div className="max-w-3xl space-y-8">
+        <section>
+          <h2 className="mb-1 font-display text-[17px] font-semibold text-fg">Account</h2>
+          <p className="mb-5 text-[13px] text-fg-muted">Your profile, plan, and data.</p>
+          <AccountSettings
+            name={user?.name ?? ""}
+            email={user?.email ?? ""}
+            plan={(user?.plan ?? "FREE") as "FREE" | "PRO"}
+          />
+        </section>
+
         <section>
           <h2 className="mb-1 font-display text-[17px] font-semibold text-fg">Email &amp; sync</h2>
           <p className="mb-5 text-[13px] text-fg-muted">

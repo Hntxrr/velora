@@ -12,11 +12,20 @@ import { getOverview, getSpendProfitTrend } from "@/lib/analytics";
 import { listOrders } from "@/lib/orders";
 import { getDeliveryEvents } from "@/lib/tracking";
 import { countDrafts } from "@/lib/review";
+import { isPro } from "@/lib/session";
+import { UpgradePrompt } from "@/components/UpgradePrompt";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  if (!(await isPro())) {
+    return (
+      <AppShell title="Dashboard">
+        <UpgradePrompt feature="The dashboard" />
+      </AppShell>
+    );
+  }
   const now = new Date();
   const in7 = new Date(now.getTime() + 7 * 864e5);
 
