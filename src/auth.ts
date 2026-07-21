@@ -19,18 +19,21 @@ export const enabledOAuth = {
 // can't break the whole auth config.
 const providers: NextAuthConfig["providers"] = [
   Credentials({
-    id: "quick",
-    name: "Email",
-    credentials: { email: { label: "Email", type: "email" } },
+    id: "password",
+    name: "Email & password",
+    credentials: {
+      email: { label: "Email", type: "email" },
+      password: { label: "Password", type: "password" },
+    },
     async authorize(creds) {
       const email = String(creds?.email ?? "").trim().toLowerCase();
-      if (!email || !email.includes("@")) return null;
-      let user = await db.user.findUnique({ where: { email } });
-      if (!user) {
-        user = await db.user.create({
-          data: { email, name: email.split("@")[0] },
-        });
-      }
+      const password = String(creds?.password ?? "");
+      if (!email || !password) return null;
+      const user = await db.user.findUnique({ where: { email } });
+      if (!user?.passwordHash) return null;
+      const { verifyPassword } = await import("@/lib/password");
+      const ok = await verifyPassword(password, user.passwordHash);
+      if (!ok) return null;
       return { id: user.id, email: user.email, name: user.name, image: user.image };
     },
   }),

@@ -1,5 +1,6 @@
 import { signIn, enabledOAuth } from "@/auth";
 import { Logo } from "@/components/brand/Logo";
+import { AuthForm } from "@/components/auth/AuthForm";
 import { GoogleIcon, AppleIcon, DiscordIcon } from "@/components/brand/ProviderIcons";
 
 export const metadata = { title: "Sign in — Velora" };
@@ -7,12 +8,6 @@ export const metadata = { title: "Sign in — Velora" };
 async function signInWith(provider: "google" | "apple" | "discord") {
   "use server";
   await signIn(provider, { redirectTo: "/dashboard" });
-}
-
-async function quickSignIn(formData: FormData) {
-  "use server";
-  const email = String(formData.get("email") ?? "");
-  await signIn("quick", { email, redirectTo: "/dashboard" });
 }
 
 export default function LoginPage() {
@@ -41,23 +36,7 @@ export default function LoginPage() {
         </div>
 
         <div className="rounded-[--radius-xl] border border-[--color-border] bg-[--color-surface] p-5 shadow-[var(--shadow-card)]">
-          {/* Quick email sign-in — fastest way to start */}
-          <form action={quickSignIn} className="space-y-2.5">
-            <input
-              type="email"
-              name="email"
-              required
-              placeholder="you@example.com"
-              className="w-full rounded-[--radius-md] border border-[--color-border] bg-[--color-surface-2] px-4 py-3 text-[14px] text-fg placeholder:text-fg-faint focus:border-[--color-brand] focus:outline-none focus:ring-2 focus:ring-[--color-brand]/30"
-            />
-            <button
-              type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-[--radius-md] px-4 py-3 text-[14px] font-semibold text-white transition-all hover:brightness-110 active:scale-[0.99]"
-              style={{ background: "var(--gradient-brand)" }}
-            >
-              Continue with email
-            </button>
-          </form>
+          <AuthForm />
 
           {(enabledOAuth.google || enabledOAuth.apple || enabledOAuth.discord) && (
             <>

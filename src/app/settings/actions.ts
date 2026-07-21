@@ -18,6 +18,11 @@ export async function connectInbox(input: { emailAddress: string; appPassword: s
   const emailAddress = input.emailAddress.trim().toLowerCase();
   const appPassword = input.appPassword.replace(/\s+/g, "");
   if (!emailAddress || !appPassword) throw new Error("Email and app password are required");
+  if (!process.env.CREDENTIAL_ENCRYPTION_KEY) {
+    throw new Error(
+      "Email isn't configured on the server yet — add the CREDENTIAL_ENCRYPTION_KEY environment variable, then redeploy."
+    );
+  }
 
   await db.emailConnection.create({
     data: {

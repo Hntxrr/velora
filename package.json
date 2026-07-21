@@ -19,6 +19,7 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
     "@prisma/client": "^6.3.1",
+    "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "gifenc": "^1.0.3",
     "html-to-image": "^1.11.13",
@@ -35,6 +36,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",
+    "@types/bcryptjs": "^2.4.6",
     "@types/mailparser": "^3.4.6",
     "@types/node": "^22.10.7",
     "@types/react": "^19.0.7",
