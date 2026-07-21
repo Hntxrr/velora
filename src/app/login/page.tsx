@@ -9,6 +9,12 @@ async function signInWith(provider: "google" | "apple" | "discord") {
   await signIn(provider, { redirectTo: "/dashboard" });
 }
 
+async function quickSignIn(formData: FormData) {
+  "use server";
+  const email = String(formData.get("email") ?? "");
+  await signIn("quick", { email, redirectTo: "/dashboard" });
+}
+
 export default function LoginPage() {
   return (
     <div className="relative z-10 flex min-h-dvh items-center justify-center px-4">
@@ -30,12 +36,35 @@ export default function LoginPage() {
             Welcome to <span className="text-gradient">Velora</span>
           </h1>
           <p className="mt-2 max-w-xs text-[14px] leading-relaxed text-fg-muted">
-            Your order &amp; profit command center. Sign in to pick up where you
-            left off.
+            Track your orders and shipments in one beautiful place.
           </p>
         </div>
 
         <div className="rounded-[--radius-xl] border border-[--color-border] bg-[--color-surface] p-5 shadow-[var(--shadow-card)]">
+          {/* Quick email sign-in — fastest way to start */}
+          <form action={quickSignIn} className="space-y-2.5">
+            <input
+              type="email"
+              name="email"
+              required
+              placeholder="you@example.com"
+              className="w-full rounded-[--radius-md] border border-[--color-border] bg-[--color-surface-2] px-4 py-3 text-[14px] text-fg placeholder:text-fg-faint focus:border-[--color-brand] focus:outline-none focus:ring-2 focus:ring-[--color-brand]/30"
+            />
+            <button
+              type="submit"
+              className="flex w-full items-center justify-center gap-2 rounded-[--radius-md] px-4 py-3 text-[14px] font-semibold text-white transition-all hover:brightness-110 active:scale-[0.99]"
+              style={{ background: "var(--gradient-brand)" }}
+            >
+              Continue with email
+            </button>
+          </form>
+
+          <div className="my-4 flex items-center gap-3">
+            <span className="h-px flex-1 bg-[--color-border]" />
+            <span className="text-[11px] uppercase tracking-wide text-fg-faint">or</span>
+            <span className="h-px flex-1 bg-[--color-border]" />
+          </div>
+
           <div className="space-y-2.5">
             <form action={signInWith.bind(null, "google")}>
               <ProviderButton icon={<GoogleIcon />} label="Continue with Google" />
@@ -49,14 +78,9 @@ export default function LoginPage() {
           </div>
 
           <p className="mt-5 text-center text-[11.5px] leading-relaxed text-fg-faint">
-            By continuing you agree to Velora&apos;s Terms of Service and Privacy
-            Policy.
+            Signing in creates your account if you don&apos;t have one.
           </p>
         </div>
-
-        <p className="mt-6 text-center text-[12.5px] text-fg-faint">
-          New here? Signing in with any provider creates your account.
-        </p>
       </div>
     </div>
   );

@@ -6,20 +6,11 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { MatchingPanel } from "@/components/products/MatchingPanel";
 import { NewProductButton } from "@/components/products/NewProductButton";
 import { listProducts, getUnmatchedGroups } from "@/lib/products";
-import { isPro } from "@/lib/session";
-import { UpgradePrompt } from "@/components/UpgradePrompt";
 import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProductsPage() {
-  if (!(await isPro())) {
-    return (
-      <AppShell title="Products">
-        <UpgradePrompt feature="The product library" />
-      </AppShell>
-    );
-  }
   const [products, groups] = await Promise.all([listProducts(), getUnmatchedGroups()]);
 
   return (

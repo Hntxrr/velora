@@ -11,20 +11,11 @@ import {
   getRetailerBreakdown,
   getDeliveryPerformance,
 } from "@/lib/analytics";
-import { isPro } from "@/lib/session";
-import { UpgradePrompt } from "@/components/UpgradePrompt";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function AnalyticsPage() {
-  if (!(await isPro())) {
-    return (
-      <AppShell title="Analytics">
-        <UpgradePrompt feature="Analytics" />
-      </AppShell>
-    );
-  }
   const [overview, trend, retailers, delivery] = await Promise.all([
     getOverview(),
     getSpendProfitTrend(6),

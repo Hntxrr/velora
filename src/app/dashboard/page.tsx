@@ -1,31 +1,21 @@
 import Link from "next/link";
-import { Wallet, TrendingUp, PiggyBank, Percent, Target, Truck, ArrowRight } from "lucide-react";
+import { Wallet, Layers, Target, Truck, ArrowRight } from "lucide-react";
 import { AppShell } from "@/components/shell/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { StatCard } from "@/components/ui/StatCard";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { SpendProfitChart } from "@/components/charts/SpendProfitChart";
 import { Button } from "@/components/ui/Button";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Package } from "lucide-react";
+import { EmptyDashboard } from "@/components/dashboard/EmptyDashboard";
 import { getOverview, getSpendProfitTrend } from "@/lib/analytics";
 import { listOrders } from "@/lib/orders";
 import { getDeliveryEvents } from "@/lib/tracking";
 import { countDrafts } from "@/lib/review";
-import { isPro } from "@/lib/session";
-import { UpgradePrompt } from "@/components/UpgradePrompt";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  if (!(await isPro())) {
-    return (
-      <AppShell title="Dashboard">
-        <UpgradePrompt feature="The dashboard" />
-      </AppShell>
-    );
-  }
   const now = new Date();
   const in7 = new Date(now.getTime() + 7 * 864e5);
 
@@ -49,21 +39,16 @@ export default async function DashboardPage() {
       </div>
 
       {empty ? (
-        <EmptyState
-          icon={Package}
-          title="Let's get your first order in"
-          description="Add an order manually or connect your inbox in Settings to auto-import from forwarded emails. Your dashboard fills in from there."
-          action="Add an order"
-        />
+        <EmptyDashboard />
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-            <StatCard label="Spent (mo)" value={formatCurrency(overview.totalSpentMonth)} accent icon={<Wallet size={16} />} hint="This month" />
-            <StatCard label="Revenue" value={formatCurrency(overview.revenue)} icon={<TrendingUp size={16} />} />
-            <StatCard label="Profit" value={formatCurrency(overview.profit)} icon={<PiggyBank size={16} />} hint="Matched to sold" />
-            <StatCard label="ROI" value={overview.revenue ? formatPercent(overview.roi) : "—"} icon={<Percent size={16} />} />
-            <StatCard label="Stick rate" value={formatPercent(overview.stickRate)} icon={<Target size={16} />} hint="Confirmed vs cancelled" />
+            <StatCard label="Orders" value={String(overview.ordersCount)} accent icon={<Layers size={16} />} />
+            <StatCard label="Spent (mo)" value={formatCurrency(overview.totalSpentMonth)} icon={<Wallet size={16} />} hint="This month" />
+            <StatCard label="Total spent" value={formatCurrency(overview.totalSpentLifetime)} icon={<Wallet size={16} />} hint="All time" />
+            <StatCard label="Units" value={String(overview.unitsCount)} icon={<Layers size={16} />} />
             <StatCard label="Arriving" value={String(overview.arrivingCount)} icon={<Truck size={16} />} hint="Next 7 days" />
+            <StatCard label="Stick rate" value={formatPercent(overview.stickRate)} icon={<Target size={16} />} hint="Confirmed vs cancelled" />
           </div>
 
           <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">

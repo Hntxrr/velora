@@ -3,20 +3,11 @@ import { StatCard } from "@/components/ui/StatCard";
 import { InventoryManager } from "@/components/inventory/InventoryManager";
 import { listStacks, listSales, getInventorySummary } from "@/lib/inventory";
 import { listProducts } from "@/lib/products";
-import { isPro } from "@/lib/session";
-import { UpgradePrompt } from "@/components/UpgradePrompt";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function InventoryPage() {
-  if (!(await isPro())) {
-    return (
-      <AppShell title="Inventory">
-        <UpgradePrompt feature="Inventory & sales" />
-      </AppShell>
-    );
-  }
   const [stacks, sales, summary, products] = await Promise.all([
     listStacks(),
     listSales(),

@@ -3,6 +3,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import Google from "next-auth/providers/google";
 import Apple from "next-auth/providers/apple";
 import Discord from "next-auth/providers/discord";
+import Credentials from "next-auth/providers/credentials";
 import type { Plan } from "@prisma/client";
 import { db } from "@/lib/db";
 
@@ -21,6 +22,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({ allowDangerousEmailAccountLinking: true }),
     Apple({ allowDangerousEmailAccountLinking: true }),
     Discord({ allowDangerousEmailAccountLinking: true }),
+    // Quick email sign-in — no OAuth setup needed. Finds or creates a user by
+    // email so you can start using the app immediately.
+    Credentials({
+      id: "quick",
+      name: "Email",
+      credentials: { email: { label: "Email", type: "email" } },
+      async authorize(creds) {
+        const email = String(creds?.email ?? "").trim().toLowerCase();
+        if (!email || !email.includes("@")) return null;
+        let user = await db.user.findUnique({ where: { email } });
+        if (!user) {
+          user = await db.user.create({
+            data: { email, name: email.split("@")[0] },
+          });
+        }
+        return { id: user.id, email: user.email, name: user.name, image: user.image };
+      },
+    }),
   ],
   callbacks: {
     async jwt({ token, user }) {

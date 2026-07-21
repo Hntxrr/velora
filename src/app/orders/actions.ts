@@ -172,3 +172,73 @@ export async function deleteOrders(ids: string[]) {
   await db.order.deleteMany({ where: { id: { in: ids }, userId } });
   revalidatePath("/orders");
 }
+
+/** Populate the account with a few realistic sample orders for testing. */
+export async function seedSampleOrders() {
+  const userId = await requireUserId();
+  const retailers = await db.retailer.findMany();
+  const rid = (slug: string) => retailers.find((r) => r.slug === slug)?.id ?? null;
+  const day = 864e5;
+  const now = Date.now();
+
+  const samples: {
+    retailer: string;
+    store: string;
+    orderNumber: string;
+    status: OrderStatus;
+    daysAgo: number;
+    etaDays: number;
+    items: { rawName: string; quantity: number; unitPrice: number }[];
+    tax: number;
+    shipping: number;
+  }[] = [
+    { retailer: "pokemon-center", store: "Pokémon Center", orderNumber: "PC-100294", status: "SHIPPED", daysAgo: 3, etaDays: 2, tax: 4.4, shipping: 0, items: [{ rawName: "Scarlet & Violet 151 Elite Trainer Box", quantity: 2, unitPrice: 49.99 }] },
+    { retailer: "best-buy", store: "Best Buy", orderNumber: "BBY-77213", status: "OUT_FOR_DELIVERY", daysAgo: 2, etaDays: 0, tax: 41.2, shipping: 0, items: [{ rawName: "PlayStation 5 Slim Console", quantity: 1, unitPrice: 499.99 }] },
+    { retailer: "target", store: "Target", orderNumber: "T-4459120", status: "DELIVERED", daysAgo: 9, etaDays: -5, tax: 8.0, shipping: 0, items: [{ rawName: "Prismatic Evolutions ETB", quantity: 4, unitPrice: 49.99 }] },
+    { retailer: "walmart", store: "Walmart", orderNumber: "WM-6620481", status: "CONFIRMED", daysAgo: 1, etaDays: 4, tax: 12.5, shipping: 5.99, items: [{ rawName: "LEGO Icons Orchid", quantity: 1, unitPrice: 49.99 }, { rawName: "LEGO Botanical Wildflower", quantity: 1, unitPrice: 59.99 }] },
+    { retailer: "costco", store: "Costco", orderNumber: "CO-338201", status: "CANCELLED", daysAgo: 6, etaDays: 3, tax: 0, shipping: 0, items: [{ rawName: "GPU RTX Bundle", quantity: 1, unitPrice: 1299.0 }] },
+  ];
+
+  for (const s of samples) {
+    const alloc = allocateCosts({
+      items: s.items.map((i) => ({ quantity: i.quantity, unitPrice: i.unitPrice })),
+      taxTotal: s.tax,
+      shippingTotal: s.shipping,
+      discountTotal: 0,
+    });
+    await db.order.create({
+      data: {
+        userId,
+        retailerId: rid(s.retailer),
+        storeLabel: s.store,
+        orderNumber: s.orderNumber,
+        status: s.status,
+        purchaseDate: new Date(now - s.daysAgo * day),
+        deliveryDateEst: new Date(now + s.etaDays * day),
+        deliveryDateActual: s.status === "DELIVERED" ? new Date(now + s.etaDays * day) : null,
+        subtotal: alloc.subtotal,
+        taxTotal: s.tax,
+        shippingTotal: s.shipping,
+        discountTotal: 0,
+        grandTotal: alloc.grandTotal,
+        source: "MANUAL",
+        tags: [],
+        items: {
+          create: s.items.map((it, idx) => ({
+            userId,
+            rawName: it.rawName,
+            quantity: it.quantity,
+            unitPrice: it.unitPrice,
+            allocatedTax: alloc.lines[idx].allocatedTax,
+            allocatedShipping: alloc.lines[idx].allocatedShipping,
+            allocatedDiscount: alloc.lines[idx].allocatedDiscount,
+            effectiveUnitCost: alloc.lines[idx].effectiveUnitCost,
+          })),
+        },
+      },
+    });
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/orders");
+}
