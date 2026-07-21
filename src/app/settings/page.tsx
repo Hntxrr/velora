@@ -7,17 +7,19 @@ import { listWebhooks } from "@/lib/notifications";
 import { countDrafts } from "@/lib/review";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const session = await auth();
+  if (!session?.user?.id) redirect("/login");
   const [inboxes, webhooks, reviewCount, user] = await Promise.all([
     listInboxes(),
     listWebhooks(),
     countDrafts(),
     db.user.findUnique({
-      where: { id: session!.user.id },
+      where: { id: session.user.id },
       select: { name: true, email: true, plan: true },
     }),
   ]);
