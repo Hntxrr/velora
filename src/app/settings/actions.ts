@@ -37,10 +37,10 @@ export async function disconnectInbox(id: string) {
   revalidatePath("/settings");
 }
 
-/** Trigger an on-demand sync of all the user's inboxes. */
-export async function syncNow() {
+/** Trigger an on-demand sync of all the user's inboxes, optionally going back N days. */
+export async function syncNow(lookbackDays?: number) {
   const userId = await requireUserId();
-  const results = await syncUser(userId);
+  const results = await syncUser(userId, lookbackDays ? { lookbackDays } : {});
   revalidatePath("/settings");
   revalidatePath("/review");
   const newDrafts = results.reduce((a, r) => a + r.newDrafts, 0);

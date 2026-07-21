@@ -5,6 +5,7 @@ import {
   Calendar,
   Bell,
   Sparkles,
+  Inbox,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -32,6 +33,7 @@ export const NAV: NavSection[] = [
   {
     title: "Workspace",
     items: [
+      { label: "Review Queue", href: "/review", icon: Inbox, badgeKey: "review" },
       { label: "Notifications", href: "/notifications", icon: Bell },
       { label: "Settings", href: "/settings", icon: Settings },
     ],

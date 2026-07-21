@@ -14,8 +14,16 @@ export type SyncResult = {
   error?: string;
 };
 
+export type SyncOptions = {
+  /** Force a historical fetch this far back (days), ignoring lastSyncedAt. */
+  lookbackDays?: number;
+};
+
 /** Sync a single email connection: fetch new mail, parse, queue drafts. */
-export async function syncConnection(connectionId: string): Promise<SyncResult> {
+export async function syncConnection(
+  connectionId: string,
+  opts: SyncOptions = {}
+): Promise<SyncResult> {
   const connection = await db.emailConnection.findUnique({ where: { id: connectionId } });
   if (!connection) return { connectionId, fetched: 0, newDrafts: 0, error: "Connection not found" };
 
@@ -26,9 +34,13 @@ export async function syncConnection(connectionId: string): Promise<SyncResult> 
 
   try {
     const password = decryptSecret(connection.encryptedCredential);
-    const since =
-      connection.lastSyncedAt ??
-      new Date(Date.now() - FIRST_SYNC_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+    const dayMs = 24 * 60 * 60 * 1000;
+    // Explicit lookback (user chose "go back N days") wins; otherwise do an
+    // incremental sync from the last time we checked; first ever sync uses the
+    // default window.
+    const since = opts.lookbackDays
+      ? new Date(Date.now() - opts.lookbackDays * dayMs)
+      : connection.lastSyncedAt ?? new Date(Date.now() - FIRST_SYNC_WINDOW_DAYS * dayMs);
 
     const messages = await fetchMessages({
       email: connection.emailAddress,
@@ -111,13 +123,13 @@ export async function syncConnection(connectionId: string): Promise<SyncResult> 
 }
 
 /** Sync every connection for a user (used by "Sync now" and the worker). */
-export async function syncUser(userId: string): Promise<SyncResult[]> {
+export async function syncUser(userId: string, opts: SyncOptions = {}): Promise<SyncResult[]> {
   const connections = await db.emailConnection.findMany({
     where: { userId, status: { not: "DISCONNECTED" } },
   });
   const results: SyncResult[] = [];
   for (const c of connections) {
-    results.push(await syncConnection(c.id));
+    results.push(await syncConnection(c.id, opts));
   }
   return results;
 }

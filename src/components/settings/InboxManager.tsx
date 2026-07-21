@@ -31,10 +31,13 @@ export function InboxManager({ inboxes }: { inboxes: InboxDTO[] }) {
     });
   };
 
+  const [lookback, setLookback] = React.useState<number>(30);
+
   const sync = () => {
     setMsg(null);
     startTransition(async () => {
-      const res = await syncNow();
+      // lookback 0 = incremental (new mail since last sync)
+      const res = await syncNow(lookback || undefined);
       setMsg(
         res.error
           ? { ok: false, text: res.error }
@@ -63,9 +66,24 @@ export function InboxManager({ inboxes }: { inboxes: InboxDTO[] }) {
             </p>
           </div>
           {inboxes.length > 0 && (
-            <Button variant="secondary" size="sm" onClick={sync} disabled={pending} className="gap-1.5">
-              <RefreshCw size={14} className={pending ? "animate-spin" : ""} /> Sync now
-            </Button>
+            <div className="flex items-center gap-2">
+              <select
+                value={lookback}
+                onChange={(e) => setLookback(Number(e.target.value))}
+                disabled={pending}
+                className="cursor-pointer rounded-[--radius-sm] border border-[--color-border] bg-[--color-surface] px-2.5 py-2 text-[12.5px] text-fg-muted focus:outline-none"
+              >
+                <option value={0}>New only</option>
+                <option value={7}>Last 7 days</option>
+                <option value={30}>Last 30 days</option>
+                <option value={90}>Last 90 days</option>
+                <option value={365}>Last year</option>
+                <option value={3650}>Everything</option>
+              </select>
+              <Button variant="secondary" size="sm" onClick={sync} disabled={pending} className="gap-1.5">
+                <RefreshCw size={14} className={pending ? "animate-spin" : ""} /> Sync
+              </Button>
+            </div>
           )}
         </div>
 
