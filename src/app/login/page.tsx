@@ -1,4 +1,4 @@
-import { signIn } from "@/auth";
+import { signIn, enabledOAuth } from "@/auth";
 import { Logo } from "@/components/brand/Logo";
 import { GoogleIcon, AppleIcon, DiscordIcon } from "@/components/brand/ProviderIcons";
 
@@ -59,23 +59,33 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="my-4 flex items-center gap-3">
-            <span className="h-px flex-1 bg-[--color-border]" />
-            <span className="text-[11px] uppercase tracking-wide text-fg-faint">or</span>
-            <span className="h-px flex-1 bg-[--color-border]" />
-          </div>
+          {(enabledOAuth.google || enabledOAuth.apple || enabledOAuth.discord) && (
+            <>
+              <div className="my-4 flex items-center gap-3">
+                <span className="h-px flex-1 bg-[--color-border]" />
+                <span className="text-[11px] uppercase tracking-wide text-fg-faint">or</span>
+                <span className="h-px flex-1 bg-[--color-border]" />
+              </div>
 
-          <div className="space-y-2.5">
-            <form action={signInWith.bind(null, "google")}>
-              <ProviderButton icon={<GoogleIcon />} label="Continue with Google" />
-            </form>
-            <form action={signInWith.bind(null, "apple")}>
-              <ProviderButton icon={<AppleIcon />} label="Continue with Apple" />
-            </form>
-            <form action={signInWith.bind(null, "discord")}>
-              <ProviderButton icon={<DiscordIcon />} label="Continue with Discord" />
-            </form>
-          </div>
+              <div className="space-y-2.5">
+                {enabledOAuth.google && (
+                  <form action={signInWith.bind(null, "google")}>
+                    <ProviderButton icon={<GoogleIcon />} label="Continue with Google" />
+                  </form>
+                )}
+                {enabledOAuth.apple && (
+                  <form action={signInWith.bind(null, "apple")}>
+                    <ProviderButton icon={<AppleIcon />} label="Continue with Apple" />
+                  </form>
+                )}
+                {enabledOAuth.discord && (
+                  <form action={signInWith.bind(null, "discord")}>
+                    <ProviderButton icon={<DiscordIcon />} label="Continue with Discord" />
+                  </form>
+                )}
+              </div>
+            </>
+          )}
 
           <p className="mt-5 text-center text-[11.5px] leading-relaxed text-fg-faint">
             Signing in creates your account if you don&apos;t have one.
